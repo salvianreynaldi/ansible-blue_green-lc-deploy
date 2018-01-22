@@ -38,6 +38,7 @@
   set_fact:
     old_lc_name: "{{ old_asg.launch_config_name }}"
     new_lc_name: "{{ app_name }}-app-{{ new_service_version }}-{{ infra_environment }}"
+    asg_tags: "{{ old_asg.tags + { 'Key': 'AmiId', 'Value': new_ami.results[0].ami_id } }}"
 
 - name: create new launch config
   ec2_lc:
@@ -70,7 +71,7 @@
     health_check_type: "{{ asg_health_check_type }}"
     target_group_arns: "{{ asg_target_group_arns }}"
     vpc_zone_identifier: "{{ asg_vpc_zone_identifier }}"
-    tags: "{{ old_asg.tags | combine(new_ami.results[0].tags, {'AmiId': new_ami.results[0].ami_id }) }}"
+    tags: "{{ asg_tags }}"
     wait_timeout: "{{ asg_wait_timeout }}"
 
 - name: delete old launch config
