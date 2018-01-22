@@ -70,19 +70,7 @@
     health_check_type: "{{ asg_health_check_type }}"
     target_group_arns: "{{ asg_target_group_arns }}"
     vpc_zone_identifier: "{{ asg_vpc_zone_identifier }}"
-    tags:
-      - Name: "{{ new_lc_name }}"
-      - Service: "{{ service_name }}"
-      - Cluster: "{{ service_name }}-app"
-      - ServiceVersion: "{{ new_service_version }}"
-      - Application: "{{ new_ami.results[0].tags.Application }}"
-      - Description: "This instance is running the {{ service_name }} service"
-      - Environment: "{{ infra_environment }}"
-      - AmiId: "{{ new_ami.results[0].ami_id }}"
-      - SourceAmiId: "{{ new_ami.results[0].tags.SourceAmi }}"
-      - AppBuildTime: "{{ new_ami.results[0].tags.AppBuildTime }}"
-      - AmiBakeTime: "{{ new_ami.results[0].tags.AmiBakeTime }}"
-      - ProductDomain: "{{ product_domain }}"
+    tags: "{{ old_asg.tags | combine(new_ami.results[0].tags, {'AmiId': new_ami.results[0].ami_id }) }}"
     wait_timeout: "{{ asg_wait_timeout }}"
 
 - name: delete old launch config
