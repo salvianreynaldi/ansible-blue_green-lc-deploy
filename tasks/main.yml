@@ -1,8 +1,8 @@
 ---
 - name: Check Ansible Version
   fail:
-    msg: "Detected ansible version is {{ ansible_version.full }}, please use ansible v2.5.x"
-  when: ansible_version.full is version('2.5.14', '>') or ansible_version.full is version('2.5.0', '<')
+    msg: "Detected ansible version is {{ ansible_version.full }}, please use ansible version >= 2.5.x"
+  when: ansible_version.full is version('2.5.0', '<')
 
 - name: Get the AMI
   ec2_ami_facts:
@@ -89,6 +89,7 @@
     region: "{{ aws_region }}"
     default_cooldown: "{{ asg_default_cooldown }}"
     name: "{{ asg_name }}"
+    metrics_collection: "{{ asg_metrics_collection }}"
     launch_config_name: "{{ new_lc_name }}"
     max_size: "{{ asg_max_size | default(asg.results[0].max_size) }}"
     min_size: "{{ asg_min_size | default(asg.results[0].min_size) }}"
@@ -99,6 +100,7 @@
     replace_batch_size: "{{ asg_replace_batch_size | default(omit) }}"
     wait_for_instances: "{{ asg_wait_for_instances }}"
     wait_timeout: "{{ asg_wait_timeout }}"
+
 
 - name: Delete the Old Launch Configuration
   ec2_lc:
