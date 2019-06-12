@@ -42,10 +42,11 @@
 
 - name: Create a new launch template version
   ec2_launch_template:
+    region: "{{ aws_region }}"
     name: "{{ lt_name }}"
     image_id: "{{ ami.images[0].image_id }}"
     default_version: "latest"
-  when: replace_new_instances
+  when: replace_new_instances | bool
 
 - name: Update the ASG
   ec2_asg:
