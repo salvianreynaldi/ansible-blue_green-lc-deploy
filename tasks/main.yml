@@ -54,9 +54,11 @@
     name: "{{ asg_name }}"
     metrics_collection: "{{ asg_metrics_collection }}"
     lt_check: true
-    launch_template:
-      version: "latest"
-      launch_template_name: "{{ lt_name }}"
+    mixed_instances_policy:
+      launch_template:
+        launch_template_specification:
+        launch_template_name: "{{ lt_name }}"
+        version: "$Latest"
     max_size: "{{ asg_max_size | default(asg.results[0].max_size) }}"
     min_size: "{{ asg_min_size | default(asg.results[0].min_size) }}"
     desired_capacity: "{{ asg_desired_capacity | default(asg.results[0].desired_capacity) }}"
