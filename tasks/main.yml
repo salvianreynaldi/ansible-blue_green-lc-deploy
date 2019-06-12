@@ -1,8 +1,8 @@
 ---
 - name: Check Ansible Version
   fail:
-    msg: "Detected ansible version is {{ ansible_version.full }}, please use ansible version >= 2.5.x"
-  when: ansible_version.full is version('2.5.0', '<')
+    msg: "Detected ansible version is {{ ansible_version.full }}, please use ansible version >= 2.8.x"
+  when: ansible_version.full is version('2.8.0', '<')
 
 - name: Get the AMI
   ec2_ami_facts:
@@ -36,53 +36,19 @@
     msg: "Got {{ asg.results|length }} asg, expected 1. Please check `asg_name` parameter."
   when: asg.results|length != 1
 
-- name: Get Old Launch Configuration Name
+- name: Get Launch Template Name
   set_fact:
-    old_lc_name: "{{ asg.results[0].launch_configuration_name }}"
+    lt_name: "{{ asg.results[0].launch_configuration_name }}"
 
-- name: Set New Launch Configuration Name
-  set_fact:
-    new_lc_name: "{{ service_name }}-{{ cluster_role }}-{{ ami.images[0].name }}-{{ service_environment }}-{{ ansible_date_time.iso8601_basic_short }}-{{ launch_configuration_name_suffix }}"
-  when: replace_new_instances
-
-- name: Reinstate Current Launch Configuration Name
-  set_fact:
-    new_lc_name: "{{ asg.results[0].launch_configuration_name }}"
-  when: not replace_new_instances
-
-- name: Get the Old Launch Configuration
-  ec2_lc_facts:
-    region: "{{ aws_region }}"
-    name: "{{ old_lc_name }}"
-  register: old_lc
-
-- name: The Old Launch Configuration Is Found
-  debug:
-    msg: "{{ old_lc.launch_configurations }}"
-    verbosity: 3
-
-- name: Fail If the Old Launch Configuration Is Not Found
-  fail:
-    msg: "Got {{ old_lc.launch_configurations|length }} lc, expected 1."
-  when: old_lc.launch_configurations|length != 1
-
-- name: State the Launch Configuration
-  ec2_lc:
-    region: "{{ aws_region }}"
-    name: "{{ new_lc_name }}"
+- name: Create a new launch template version
+  ec2_launch_template:
+    name: "{{ lt_name }}"
     image_id: "{{ ami.images[0].image_id }}"
-    instance_type: "{{ instance_type | default(old_lc.launch_configurations[0].instance_type) }}"
-    instance_profile_name: "{{ old_lc.launch_configurations[0].iam_instance_profile }}"
-    key_name: "{{ old_lc.launch_configurations[0].key_name | default(omit, true) }}"
-    security_groups: "{{ old_lc.launch_configurations[0].security_groups }}"
-    user_data: "{{ instance_user_data }}"
-    instance_monitoring: "{{ old_lc.launch_configurations[0].instance_monitoring.enabled }}"
-    ebs_optimized: "{{ old_lc.launch_configurations[0].ebs_optimized }}"
-    volumes:
-    - device_name: "{{ ebs_device_name }}"
-      volume_size: "{{ ebs_volume_size }}"
-      volume_type: "{{ ebs_volume_type }}"
-      delete_on_termination: "{{ ebs_delete_on_termination }}"
+    key_name: my_ssh_key
+    instance_type: t2.micro
+    iam_instance_profile: myTestProfile
+    disable_api_termination: true
+  when: replace_new_instances
 
 - name: Update the ASG
   ec2_asg:
@@ -90,7 +56,9 @@
     default_cooldown: "{{ asg_default_cooldown }}"
     name: "{{ asg_name }}"
     metrics_collection: "{{ asg_metrics_collection }}"
-    launch_config_name: "{{ new_lc_name }}"
+    launch_template:
+      version: "latest"
+      launch_template_name: "{{ lt_name }}"
     max_size: "{{ asg_max_size | default(asg.results[0].max_size) }}"
     min_size: "{{ asg_min_size | default(asg.results[0].min_size) }}"
     desired_capacity: "{{ asg_desired_capacity | default(asg.results[0].desired_capacity) }}"
@@ -100,13 +68,3 @@
     replace_batch_size: "{{ asg_replace_batch_size | default(omit) }}"
     wait_for_instances: "{{ asg_wait_for_instances }}"
     wait_timeout: "{{ asg_wait_timeout }}"
-
-
-- name: Delete the Old Launch Configuration
-  ec2_lc:
-    region: "{{ aws_region }}"
-    name: "{{ old_lc_name }}"
-    state: absent
-  when:
-    - old_lc_name != new_lc_name
-    - old_lc_name is search("-" + launch_configuration_name_suffix + "$")

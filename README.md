@@ -1,19 +1,19 @@
-# blue_green-lc-deploy #
+# ansible-asg-rolling-deployment #
 
 Ansible Role that can be used either for doing Rolling Deployment on the ASG or just updating some ASG parameters.
 
 ## Requirements ##
 
-- Python >= 2.7 
+- Python >= 2.7.12+
 - boto3 == 1.8.2
-- ansible == 2.5.8
+- ansible >= 2.8.0
 
 It is recommended to use [virtualenv](https://virtualenv.pypa.io/en/stable/installation/) and [pip](https://pip.pypa.io/en/stable/installing/) to install both [boto3](https://boto3.amazonaws.com/v1/documentation/api/latest/guide/quickstart.html#installation) and [ansible](https://docs.ansible.com/ansible/latest/installation_guide/intro_installation.html#latest-releases-via-pip).
 
 Requirements mentioned above are based on these modules which are used in this role:
 - [debug](https://docs.ansible.com/ansible/2.5/modules/debug_module.html) - Print statements during execution
 - [fail](https://docs.ansible.com/ansible/2.5/modules/fail_module.html) - Fail with custom message
-- [ec2_ami_facts](https://docs.ansible.com/ansible/2.5/modules/ec2_ami_facts_module.html) - Gather facts about ec2 AMIs 
+- [ec2_ami_facts](https://docs.ansible.com/ansible/2.5/modules/ec2_ami_facts_module.html) - Gather facts about ec2 AMIs
 - [ec2_asg](https://docs.ansible.com/ansible/2.5/modules/ec2_asg_module.html) - Create or delete AWS Autoscaling Groups
 - [ec2_asg_facts](https://docs.ansible.com/ansible/2.5/modules/ec2_asg_facts_module.html) - Gather facts about ec2 Auto Scaling Groups (ASGs) in AWS
 - [ec2_lc](https://docs.ansible.com/ansible/2.5/modules/ec2_lc_module.html) - Create or delete AWS Autoscaling Launch Configurations
@@ -25,7 +25,7 @@ Requirements mentioned above are based on these modules which are used in this r
 ## Role Variables ##
 
 ### Defaults ###
- 
+
     - name: asg_wait_timeout
       description: How long in seconds to wait for instances to become viable when replaced.
       value: 3600
@@ -92,7 +92,7 @@ Requirements mentioned above are based on these modules which are used in this r
   connection: local
   vars:
     # set common_java_opts in supervisor using the ami baking playbook!
-    app_memory_java_opts: >- 
+    app_memory_java_opts: >-
       -Xms1g -Xmx1g -XX:PermSize=512m -XX:MaxPermSize=512m
     instance_count: 1
   roles:
@@ -109,7 +109,7 @@ Requirements mentioned above are based on these modules which are used in this r
       asg_min_size: "{{ instance_count }}"
       asg_max_size: "{{ instance_count }}"
       asg_desired_capacity: "{{ instance_count }}"
-            
+
       instance_user_data: |
         #cloud-config
         bootcmd:
