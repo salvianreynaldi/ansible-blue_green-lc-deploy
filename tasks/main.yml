@@ -44,10 +44,7 @@
   ec2_launch_template:
     name: "{{ lt_name }}"
     image_id: "{{ ami.images[0].image_id }}"
-    key_name: my_ssh_key
-    instance_type: t2.micro
-    iam_instance_profile: myTestProfile
-    disable_api_termination: true
+    default_version: "latest"
   when: replace_new_instances
 
 - name: Update the ASG
