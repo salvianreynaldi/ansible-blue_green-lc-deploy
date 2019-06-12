@@ -45,7 +45,7 @@
     region: "{{ aws_region }}"
     name: "{{ lt_name }}"
     image_id: "{{ ami.images[0].image_id }}"
-    default_version: "latest"
+    default_version: "$Latest"
   when: replace_new_instances | bool
 
 - name: Update the ASG
